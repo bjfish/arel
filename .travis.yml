@@ -1,37 +1,26 @@
-language: ruby
+language: java
 sudo: false
 cache: bundler
-script:
-  - "bundle exec rake test"
-  - "gem build arel.gemspec"
-env:
-  global:
-    - JRUBY_OPTS='--dev -J-Xmx1024M'
-rvm:
-  - rbx-2
-  - jruby-9.0.5.0
-  - jruby-head
-  - 2.0.0
-  - 2.1
-  - 2.2.5
-  - 2.3.1
-  - 2.4.0
-  - ruby-head
-matrix:
-  fast_finish: true
-  allow_failures:
-    - rvm: jruby-9.0.5.0
-    - rvm: jruby-head
-    - rvm: ruby-head
-    - rvm: jruby-head
-    - rvm: rbx-2
-bundler_args: --jobs 3 --retry 3
-notifications:
-  email: false
-  irc:
-    - "irc.freenode.org#rails-contrib"
-  campfire:
-    on_success: change
-    on_failure: always
-    rooms:
-      - secure: "sD4VEjsiNHTb+9LYUy0ZiGu86nH1voUANpmiO62fvO1VPg80ReKv8vNiq285MZVjcPBx9lt1iNx1nNfVlBmDzRI1tWjoyEV5LTuCAt3yQMB5Qpjy3HH1FNgyY2TGjDhIDwgTD6d8+DOCQjj/vgqzWWu1jEJVdac1K5d+dc/uElI="
+jdk: oraclejdk8
+
+before_install:
+- git clone https://github.com/graalvm/mx --depth 1
+- export PATH=$PWD/mx:$PATH
+- git clone https://github.com/graalvm/truffleruby
+- cd truffleruby
+- echo MX_BINARY_SUITES=truffle >> mx.jruby/env
+- echo JAVA_HOME=$JAVA_HOME >> mx.jruby/env
+- mx build
+- "> ~/.rvm/gemsets/global.gems"
+- "> ~/.rvm/gemsets/default.gems"
+- rvm mount $PWD -n truffleruby
+- rvm use ext-truffleruby
+- export RUBYOPT=-ropenssl-stubs
+- gem uninstall bundler -a -x
+- gem install bundler -v 1.13.7
+- bundle install
+
+install: "echo 'Skip  Install'"
+
+
+script: bundle exec rake
